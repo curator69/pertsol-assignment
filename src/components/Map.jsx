@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 
-import { personsData } from "../../data";
-
-const Map = () => {
-  const [map, setMap] = useState(null);
+const Map = ({ tasks }) => {
   const mapContainer = useRef(null);
-  // const map = useRef(null);
-  const [lng, setLng] = useState(19.0714);
+
+  const [map, setMap] = useState(null);
   const [lat, setLat] = useState(72.8822);
-  const [zoom, setZoom] = useState(9);
+  const [lng, setLng] = useState(19.0714);
+  const [zoom, setZoom] = useState(15);
+  const [markers, setMarkers] = useState([]);
 
   useEffect(() => {
     if (map) return; // initialize map only once
@@ -17,7 +16,7 @@ const Map = () => {
       new mapboxgl.Map({
         container: mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v12",
-        center: [lng, lat],
+        center: [lat, lng],
         zoom: zoom,
         accessToken:
           "pk.eyJ1IjoiY3VyYXRvcjY5IiwiYSI6ImNrejA2NGwzZTAyZjYyd3BuNzIyZzA3ZzAifQ.foqIs3Sq5H6QJGCAi9tXdg",
@@ -27,39 +26,23 @@ const Map = () => {
 
   useEffect(() => {
     if (map) {
-      let markers = [];
-      const tasksArray = personsData.map((person) => person.tasks);
-      for (let i = 0; i < tasksArray.length; i++) {
-        const { call, sms, data } = tasksArray[i];
-        // for call records
-        for (let j = 0; j < call.callRecords.length; j++) {
-          const { location } = call.callRecords[j];
-          const marker = new mapboxgl.Marker().setLngLat(location).addTo(map);
-          markers.push(marker);
-        }
-        // for data
-        if (data) {
-          const marker = new mapboxgl.Marker()
-            .setLngLat(data.location)
-            .addTo(map);
-          markers.push(marker);
-        }
-        // for sms
-        for (let k = 0; k < sms.length; k++) {
-          const { location } = sms[k];
-          const marker = new mapboxgl.Marker().setLngLat(location).addTo(map);
-          markers.push(marker);
-        }
-      }
-      console.log(markers);
+      // Remove old markers
+      markers.forEach((marker) => marker.remove());
+
+      // Add new markers
+      const newMarkers = tasks.map(({ location }) => {
+        const newMarker = new mapboxgl.Marker().setLngLat(location).addTo(map);
+        return newMarker;
+      });
+
+      setMarkers(newMarkers);
     }
-  }, [map]);
+  }, [tasks, map]);
 
   return (
     <div
       ref={mapContainer}
-      className="map-container"
-      style={{ width: "100vw", height: "100vh" }}
+      className="map-container h-full w-full max-h-screen"
     ></div>
   );
 };
